@@ -221,6 +221,17 @@ export interface UpdateEmailSettingsInput {
   days_before_reminder: number
 }
 
+export interface ReminderLog {
+  id: number
+  student_id: number
+  student_name: string
+  reminder_type: 'expiring' | 'overdue'
+  sent_date: string
+  student_email?: string
+  admin_notified: boolean
+  created_at: string
+}
+
 // ===================== ENUMS / CONSTANTS =====================
 
 export type ExpenseCategory =

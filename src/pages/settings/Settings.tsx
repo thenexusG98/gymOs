@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Mail, Database, Users, Save } from 'lucide-react'
+import { Mail, Database, Users, Save, Bell, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,7 +8,7 @@ import { emailService } from '@/services/email'
 import { backupService } from '@/services/misc'
 import { authService } from '@/services/auth'
 import { useAuthStore as _useAuthStore } from '@/store/authStore'
-import type { User, BackupInfo } from '@/types'
+import type { User, BackupInfo, ReminderLog } from '@/types'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card'
@@ -36,6 +36,8 @@ export default function Settings() {
   const [testEmail, setTestEmail] = useState('')
   const [sendingTest, setSendingTest] = useState(false)
   const [creatingBackup, setCreatingBackup] = useState(false)
+  const [reminderLogs, setReminderLogs] = useState<ReminderLog[]>([])
+  const [runningCheck, setRunningCheck] = useState(false)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
     useForm<EmailForm>({ resolver: zodResolver(emailSchema) })
@@ -74,6 +76,9 @@ export default function Settings() {
     loadEmail()
     loadBackups()
     loadUsers()
+
+    // Load recent reminder logs
+    emailService.getReminderLogs(20).then(setReminderLogs).catch(() => {/* ignore */})
   }, [reset])
 
   const saveEmail = async (data: EmailForm) => {
@@ -95,6 +100,23 @@ export default function Settings() {
       toast.error(String(e))
     } finally {
       setSendingTest(false)
+    }
+  }
+
+  const runCheck = async () => {
+    setRunningCheck(true)
+    try {
+      const sent = await emailService.manualCheck()
+      if (sent.length === 0) {
+        toast.success('Sin alumnos pendientes de recordatorio hoy')
+      } else {
+        toast.success(`Se enviaron ${sent.length} recordatorio(s)`)
+        setReminderLogs((prev) => [...sent, ...prev].slice(0, 20))
+      }
+    } catch (e) {
+      toast.error(String(e))
+    } finally {
+      setRunningCheck(false)
     }
   }
 
@@ -191,6 +213,61 @@ export default function Settings() {
                   Enviar prueba
                 </Button>
               </div>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between w-full">
+                  <CardTitle>
+                    <span className="flex items-center gap-2">
+                      <Bell className="w-4 h-4" />
+                      Recordatorios automáticos
+                    </span>
+                  </CardTitle>
+                  <Button onClick={runCheck} loading={runningCheck} variant="outline" size="sm">
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Verificar ahora
+                  </Button>
+                </div>
+              </CardHeader>
+              <p className="text-xs text-gym-text-secondary mb-4">
+                El scheduler verifica automáticamente cada 6 horas mientras la app esté abierta.
+                Los correos se envían al alumno y una copia al correo del administrador.
+              </p>
+
+              {reminderLogs.length > 0 ? (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-gym-text-secondary mb-2">Últimos recordatorios enviados</p>
+                  {reminderLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex items-center justify-between bg-gym-surface2 rounded-lg px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {log.admin_notified ? (
+                          <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                        ) : (
+                          <XCircle className="w-3.5 h-3.5 text-gym-text-secondary shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm text-gym-text truncate">{log.student_name}</p>
+                          <p className="text-xs text-gym-text-secondary truncate">{log.student_email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        <Badge variant={log.reminder_type === 'overdue' ? 'danger' : 'warning'}>
+                          {log.reminder_type === 'overdue' ? 'Vencido' : 'Por vencer'}
+                        </Badge>
+                        <span className="text-xs text-gym-text-secondary">{log.sent_date}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gym-text-secondary text-center py-3">
+                  Sin recordatorios enviados aún
+                </p>
+              )}
             </Card>
           </div>
         )}

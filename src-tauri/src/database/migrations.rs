@@ -94,6 +94,21 @@ pub fn run_migrations(conn: &Connection) -> Result<(), rusqlite::Error> {
         CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
         CREATE INDEX IF NOT EXISTS idx_attendance_student ON attendance(student_id);
         CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date);
+
+        CREATE TABLE IF NOT EXISTS reminder_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            student_name TEXT NOT NULL,
+            reminder_type TEXT NOT NULL CHECK(reminder_type IN ('expiring','overdue')),
+            sent_date TEXT NOT NULL,
+            student_email TEXT,
+            admin_notified INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (student_id) REFERENCES students(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_reminder_log_date ON reminder_log(sent_date);
+        CREATE INDEX IF NOT EXISTS idx_reminder_log_student ON reminder_log(student_id);
     ")?;
 
     // Insert default admin user if none exists

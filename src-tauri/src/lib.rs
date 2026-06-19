@@ -20,6 +20,18 @@ pub fn run() {
                 .expect("No se pudo inicializar la base de datos");
 
             app.manage(db_state);
+
+            // Spawn background scheduler — checks every 6 hours while app is running
+            let app_handle_sched = app.handle().clone();
+            std::thread::spawn(move || {
+                // Wait 2 minutes after startup before first check
+                std::thread::sleep(std::time::Duration::from_secs(120));
+                loop {
+                    commands::email::run_email_scheduler(&app_handle_sched);
+                    std::thread::sleep(std::time::Duration::from_secs(6 * 3600));
+                }
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -65,6 +77,8 @@ pub fn run() {
             commands::email::save_email_settings,
             commands::email::send_test_email,
             commands::email::send_payment_reminder,
+            commands::email::manual_reminder_check,
+            commands::email::get_reminder_logs,
             // Backup
             commands::backup::create_backup,
             commands::backup::restore_backup,
