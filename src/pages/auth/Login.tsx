@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Dumbbell, LogIn } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authService } from '@/services/auth'
 import { useAuthStore } from '@/store/authStore'
@@ -46,10 +46,12 @@ export default function Login() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gym-orange rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-gym-orange/30">
-            <Dumbbell className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gym-text">GymOS</h1>
+          <img
+            src="/logo.jpg"
+            alt="QuiTrain"
+            className="h-28 w-auto object-contain mb-2"
+            style={{ filter: 'invert(1)' }}
+          />
           <p className="text-gym-text-secondary text-sm mt-1">Sistema de Administración</p>
         </div>
 

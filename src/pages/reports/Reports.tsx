@@ -60,6 +60,7 @@ export default function Reports() {
         'Reporte de Ingresos',
         `${selMonth}/${selYear}`
       )
+      toast.success('Pdf exportado')
     } catch (e) {
       toast.error(String(e))
     }

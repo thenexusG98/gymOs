@@ -6,7 +6,6 @@ import {
   DollarSign,
   BarChart3,
   Settings,
-  Dumbbell,
   CheckSquare,
   ClipboardList,
   LogOut,
@@ -31,14 +30,13 @@ export default function Sidebar() {
   return (
     <aside className="w-56 bg-gym-surface border-r border-gym-border flex flex-col flex-shrink-0 h-full">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-gym-border">
-        <div className="w-9 h-9 bg-gym-orange rounded-xl flex items-center justify-center flex-shrink-0">
-          <Dumbbell className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="font-bold text-gym-text text-sm">GymOS</p>
-          <p className="text-xs text-gym-text-secondary">Calistenia</p>
-        </div>
+      <div className="flex items-center justify-center px-4 py-4 border-b border-gym-border">
+        <img
+          src="/logo.jpg"
+          alt="QuiTrain"
+          className="h-12 w-auto object-contain"
+          style={{ filter: 'invert(1)' }}
+        />
       </div>
 
       {/* Navigation */}
