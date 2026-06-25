@@ -1,0 +1,59 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-windows:
+    name: Build (.exe) Windows
+    runs-on: windows-latest
+
+    steps:
+      # ── 1. Checkout ─────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js ──────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Rust ─────────────────────────────────────────────────────────────
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      # ── 4. Rust cache (speeds up subsequent builds significantly) ────────────
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      # ── 5. Frontend dependencies ────────────────────────────────────────────
+      - name: Install npm dependencies
+        run: npm ci
+
+      # ── 6. Build Tauri app for Windows ──────────────────────────────────────
+      - name: Build Tauri (Windows)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Publishes a GitHub Release with the installers attached
+          tagName: v${{ github.run_number }}
+          releaseName: 'QuiTrain v${{ github.run_number }}'
+          releaseBody: |
+            Instalador de escritorio QuiTrain generado automáticamente desde la rama `main`.
+
+            **Archivos incluidos:**
+            - `QuiTrain_x64-setup.exe` — instalador NSIS (recomendado)
+            - `QuiTrain_x64_en-US.msi` — instalador MSI
+          releaseDraft: false
+          prerelease: false
+          # Only build the Windows NSIS + MSI targets
+          args: --target x86_64-pc-windows-msvc --bundles nsis,msi
